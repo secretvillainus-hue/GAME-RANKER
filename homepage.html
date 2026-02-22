@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LNNCHS Game Ranker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    /* ===== Your existing CSS ===== */
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;background:#000;font-family:monospace;color:#ffea00;overflow:hidden;font-size:11px;}
+    h1,h3,h4,button,input::placeholder{text-shadow:0 0 2px #ffea00,0 0 4px #ff00de;}
+    p,span,td,th{text-shadow:0 0 2px #00ffff,0 0 4px #00ffff;}
+    .slide{position:absolute;inset:0;padding:18px;overflow-y:auto;opacity:0;transform:translateX(30px);transition:opacity .4s ease, transform .4s ease;pointer-events:none;}
+    .slide.active{opacity:1;transform:translateX(0);pointer-events:auto;}
+    .box{border:2px solid #ffea00;padding:12px;margin-top:10px;background:rgba(0,0,0,.6);border-radius:6px;}
+    button{background:#ffea00;color:#000;border:none;padding:8px;margin-top:6px;font-size:.55em;border-radius:6px;cursor:pointer;}
+    button:hover{background:#ffff66;}
+    input,select{width:100%;padding:6px;margin-top:6px;background:#000;border:2px solid #ffea00;color:#ffea00;font-size:.55em;border-radius:4px;}
+    .nav{display:flex;gap:6px;margin-top:10px;}
+    .nav button{flex:1}
+    #profile{position:fixed;top:6px;right:6px;display:flex;align-items:center;gap:4px;z-index:10;}
+    #profile img{width:26px;height:26px;border-radius:50%;border:1px solid #ffea00;}
+    table{width:100%;border-collapse:collapse;font-size:.45em;}
+    th,td{border-bottom:1px solid #ffea00;padding:4px;}
+    td img{width:26px;height:26px;object-fit:cover;}
+    .chat-messages{height:220px;overflow-y:auto;margin-bottom:6px;font-size:.45em;}
+    .event{display:flex;gap:6px;align-items:center;margin-top:6px;font-size:.5em;}
+    .event img{width:40px;height:40px;object-fit:cover;border:1px solid #ffea00;}
+  </style>
+</head>
+<body>
+
+<!-- ===== Profile ===== -->
+<div id="profile">
+  <img id="profilePfp">
+  <span id="profileUser"></span>
+  <span id="profileRank"></span>
+  <button onclick="logout()">LOGOUT</button>
+</div>
+
+<!-- ===== Slides ===== -->
+<!-- Slide 1 -->
+<section class="slide active">
+  <h1>WELCOME</h1>
+  <p>LNNCHS GAME RANKER</p>
+  <div class="nav">
+    <button onclick="nextSlide()">NEXT →</button>
+    <button onclick="openAuth()">LOGIN / CREATE</button>
+  </div>
+</section>
+
+<!-- Slide 2 Leaderboard -->
+<section class="slide">
+  <h3>LEADERBOARD</h3>
+  <div class="box">
+    <table>
+      <thead><tr><th>POS</th><th>NAME</th><th>STAT</th><th>RANK</th></tr></thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+  </div>
+  <div class="nav"><button onclick="prevSlide()">← BACK</button><button onclick="nextSlide()">NEXT →</button></div>
+</section>
+
+<!-- Slide 3 Chat -->
+<section class="slide">
+  <h3>GLOBAL CHAT</h3>
+  <div class="box">
+    <div class="chat-messages" id="chatMessages"></div>
+    <input id="chatInput" placeholder="Type message">
+    <button onclick="sendMessage()">SEND</button>
+  </div>
+  <div class="nav"><button onclick="prevSlide()">← BACK</button><button onclick="nextSlide()">NEXT →</button></div>
+</section>
+
+<!-- Slide 4 1v1 Battle -->
+<section class="slide">
+  <h3>1v1 BATTLE</h3>
+  <div class="box">
+    <select id="battleGame">
+      <option>CODM</option><option>ML</option><option>MC</option><option>Geometry Dash</option><option>Random</option>
+    </select>
+    <input placeholder="Opponent username">
+    <button>SEND CHALLENGE</button>
+  </div>
+  <div class="nav"><button onclick="prevSlide()">← BACK</button><button onclick="nextSlide()">NEXT →</button></div>
+</section>
+
+<!-- Slide 5 Events -->
+<section class="slide">
+  <h3>EVENTS & TOURNAMENTS</h3>
+  <div class="box" id="eventsBox"></div>
+  <div class="nav"><button onclick="prevSlide()">← BACK</button><button onclick="nextSlide()">NEXT →</button></div>
+</section>
+
+<!-- Slide 6 Admin -->
+<section class="slide" id="adminSlide">
+  <h3>ADMIN CONTROLS</h3>
+
+  <div class="box">
+    <h4>Upload App Audio</h4>
+    <input type="file" id="appAudio" accept="audio/*">
+    <button onclick="uploadAudio()">UPLOAD</button>
+    <audio id="bgAudio" loop controls></audio>
+  </div>
+
+  <div class="box">
+    <h4>Events / Tournaments</h4>
+    <input id="eventTitle" placeholder="Title">
+    <select id="eventType"><option>Event</option><option>Tournament</option></select>
+    <input type="file" id="eventImg" accept="image/*">
+    <button onclick="addEvent()">ADD</button>
+  </div>
+
+  <div class="box">
+    <h4>Manage Players</h4>
+    <select id="adminSelectPlayer"></select>
+    <input id="newRankInput" placeholder="New Rank (e.g., A, B, F)">
+    <input type="file" id="newImgInput" accept="image/*">
+    <button onclick="updatePlayer()">UPDATE PLAYER</button>
+    <button onclick="banPlayer()">BAN PLAYER</button>
+  </div>
+
+  <div class="nav"><button onclick="prevSlide()">← BACK</button></div>
+</section>
+
+<!-- ===== Scripts ===== -->
+<script>
+// Slide navigation
+const slides=[...document.querySelectorAll('.slide')];let currentIndex=0;
+function showSlide(i){if(i<0||i>=slides.length)return;slides.forEach(s=>s.classList.remove('active'));slides[i].classList.add('active');currentIndex=i;}
+function nextSlide(){showSlide(currentIndex+1)}
+function prevSlide(){showSlide(currentIndex-1)}
+function openAuth(){location.href="auth.html"}
+function logout(){ localStorage.removeItem('playerLogged'); location.reload(); }
+
+// Profile
+function updateProfile(){const u=localStorage.getItem('playerLogged');const players=JSON.parse(localStorage.players||"[]");const p=players.find(x=>x.user===u);if(!p)return;profileUser.textContent=p.user;profileRank.textContent=`(${p.rank})`;profilePfp.src=p.img||"";}
+
+// Leaderboard
+function loadLeaderboard(){const body=leaderboardBody;body.innerHTML="";const players=JSON.parse(localStorage.players||"[]").filter(p=>!['F','F-'].includes(p.rank));players.forEach((p,i)=>{body.innerHTML+=`<tr><td>${i+1}</td><td>${p.user}</td><td>${p.img?`<img src="${p.img}">`:""}</td><td>${p.rank}</td></tr>`;});}
+
+// Chat
+let lastChat=0;
+function sendMessage(){const msg=chatInput.value.trim();if(!msg)return;if(Date.now()-lastChat<5000)return alert("Cooldown 5s");const user=localStorage.playerLogged;if(!user)return alert("Login first");const players=JSON.parse(localStorage.players||"[]");const p=players.find(x=>x.user===user);if(['F','F-'].includes(p.rank))return alert("Rank too low");const chat=JSON.parse(localStorage.chat||"[]");chat.push({u:user,r:p.rank,m:msg});localStorage.chat=JSON.stringify(chat);chatInput.value="";lastChat=Date.now();loadChat();}
+function loadChat(){chatMessages.innerHTML="";(JSON.parse(localStorage.chat||"[]")).forEach(c=>{chatMessages.innerHTML+=`<div>${c.u}[${c.r}] - ${c.m}</div>`;});}
+
+// Events
+function addEvent(){const t=eventTitle.value;const type=eventType.value;const f=eventImg.files[0];if(!t||!f)return;const r=new FileReader();r.onload=e=>{const ev=JSON.parse(localStorage.events||"[]");ev.push({t,type,img:e.target.result});localStorage.events=JSON.stringify(ev);loadEvents();};r.readAsDataURL(f);}
+function loadEvents(){eventsBox.innerHTML="";(JSON.parse(localStorage.events||"[]")).forEach(e=>{eventsBox.innerHTML+=`<div class="event"><img src="${e.img}"><span>${e.t} (${e.type})</span></div>`;});}
+
+// Audio
+function uploadAudio(){const f=appAudio.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{localStorage.audio=e.target.result;bgAudio.src=e.target.result;bgAudio.play();};r.readAsDataURL(f);}
+if(localStorage.audio){ bgAudio.src=localStorage.audio; }
+
+// Admin
+function loadAdminPlayers(){const select=document.getElementById('adminSelectPlayer');select.innerHTML="";const players=JSON.parse(localStorage.players||"[]");players.forEach(p=>{const opt=document.createElement('option');opt.value=p.user;opt.textContent=`${p.user} (${p.rank})`;select.appendChild(opt);});}
+function updatePlayer(){const username=document.getElementById('adminSelectPlayer').value;const newRank=document.getElementById('newRankInput').value.trim();const newImgFile=document.getElementById('newImgInput').files[0];if(!username)return alert("Select a player");const players=JSON.parse(localStorage.players||"[]");const p=players.find(x=>x.user===username);if(!p)return alert("Player not found");if(newRank)p.rank=newRank;if(newImgFile){const reader=new FileReader();reader.onload=e=>{p.img=e.target.result;localStorage.players=JSON.stringify(players);loadLeaderboard();loadAdminPlayers();alert("Player updated!");};reader.readAsDataURL(newImgFile);} else {localStorage.players=JSON.stringify(players);loadLeaderboard();loadAdminPlayers();alert("Player updated!");}}
+function banPlayer(){const username=document.getElementById('adminSelectPlayer').value;if(!username)return alert("Select a player");if(!confirm(`Are you sure you want to ban ${username}?`))return;let players=JSON.parse(localStorage.players||"[]");players=players.filter(x=>x.user!==username);localStorage.players=JSON.stringify(players);loadLeaderboard();loadAdminPlayers();alert(`${username} has been banned`);}
+
+// Init
+updateProfile();loadLeaderboard();loadChat();loadEvents();if(localStorage.adminLogged==="true"){adminSlide.style.display="block";loadAdminPlayers();}else{adminSlide.style.display="none";}
+
+// Register service worker
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}
+</script>
+
+</body>
+</html>
