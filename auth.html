@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LNNCHS Game Ranker - Auth</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; font-family:'Press Start 2P', cursive; background:#000; color:#ffea00; overflow:hidden; }
+.slider { display:flex; width:100vw; height:100vh; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; }
+.slide { flex:0 0 100vw; min-width:100vw; height:100vh; scroll-snap-align:start; scroll-snap-stop:always; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; }
+input { width:80%; padding:6px; margin:6px 0; background:#0a0a0a; border:2px solid #ffea00; color:#ffea00; font-size:0.6em; border-radius:4px; }
+button { padding:6px 12px; margin:6px; background:#ffea00; color:#000; border:none; border-radius:4px; cursor:pointer; font-size:0.6em; }
+button:hover { background:#0ff; }
+.password-wrapper { position:relative; width:80%; }
+.show-btn { position:absolute; right:4px; top:50%; transform:translateY(-50%); font-size:0.5em; padding:2px 4px; background:#111; border:1px solid #ffea00; cursor:pointer; color:#ffea00; }
+.nav-buttons { position:absolute; bottom:12px; width:calc(100% - 40px); display:flex; justify-content:space-between; }
+h2 { font-size:1.1em; text-shadow:0 0 4px #0ff,0 0 8px #ff00de,0 0 12px #ffea00; margin-bottom:12px; }
+</style>
+</head>
+<body>
+
+<div class="slider" id="slider">
+  <!-- Slide 1: Create Account -->
+  <section class="slide" id="slide1">
+    <h2>Create Account</h2>
+    <input type="text" id="createUsername" placeholder="Username">
+    <div class="password-wrapper">
+      <input type="password" id="createPassword" placeholder="Password">
+      <span class="show-btn" onclick="togglePassword('createPassword')">Show</span>
+    </div>
+    <button onclick="createAccount()">Create Account</button>
+    <p>Already have an account? Go to Login</p>
+    <div class="nav-buttons">
+      <button onclick="nextSlide()">Next →</button>
+    </div>
+  </section>
+
+  <!-- Slide 2: Login Account -->
+  <section class="slide" id="slide2">
+    <h2>Login</h2>
+    <input type="text" id="loginUsername" placeholder="Username">
+    <div class="password-wrapper">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <span class="show-btn" onclick="togglePassword('loginPassword')">Show</span>
+    </div>
+    <button onclick="loginAccount()">Login</button>
+    <p>Admin? Go to Admin Login</p>
+    <div class="nav-buttons">
+      <button onclick="prevSlide()">← Back</button>
+      <button onclick="nextSlide()">Next →</button>
+    </div>
+  </section>
+
+  <!-- Slide 3: Admin Login -->
+  <section class="slide" id="slide3">
+    <h2>Admin Login</h2>
+    <input type="text" id="adminUsername" placeholder="Admin Username">
+    <div class="password-wrapper">
+      <input type="password" id="adminPassword" placeholder="Admin Password">
+      <span class="show-btn" onclick="togglePassword('adminPassword')">Show</span>
+    </div>
+    <button onclick="adminLogin()">Login as Admin</button>
+    <div class="nav-buttons">
+      <button onclick="prevSlide()">← Back</button>
+    </div>
+  </section>
+</div>
+
+<script>
+// --- Slider ---
+const slider = document.getElementById('slider');
+const slides = document.querySelectorAll('.slide');
+let currentIndex = 0;
+function nextSlide() { if(currentIndex<slides.length-1) currentIndex++; slider.scrollTo({left: window.innerWidth*currentIndex, behavior:'smooth'}); }
+function prevSlide() { if(currentIndex>0) currentIndex--; slider.scrollTo({left: window.innerWidth*currentIndex, behavior:'smooth'}); }
+
+// --- Show Password ---
+function togglePassword(id){
+  const input = document.getElementById(id);
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// --- Create Account ---
+function createAccount(){
+  const username = document.getElementById('createUsername').value.trim();
+  const password = document.getElementById('createPassword').value.trim();
+  if(!username || !password){ alert('Fill all fields'); return; }
+
+  let players = JSON.parse(localStorage.getItem('players')||"[]");
+  if(players.find(p=>p.user===username)){ alert('Username already exists'); return; }
+
+  players.push({user:username, pass:password, rank:'F-', img:'https://via.placeholder.com/40'});
+  localStorage.setItem('players', JSON.stringify(players));
+  localStorage.setItem('playerLogged', username);
+  window.location.href='homepage.html';
+}
+
+// --- Login Account ---
+function loginAccount(){
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+  if(!username || !password){ alert('Fill all fields'); return; }
+
+  let players = JSON.parse(localStorage.getItem('players')||"[]");
+  const player = players.find(p=>p.user===username && p.pass===password);
+  if(!player){ alert('Invalid credentials'); return; }
+
+  localStorage.setItem('playerLogged', username);
+  window.location.href='homepage.html';
+}
+
+// --- Admin Login ---
+function adminLogin(){
+  const username = document.getElementById('adminUsername').value.trim();
+  const password = document.getElementById('adminPassword').value.trim();
+
+  if(username==='admin' && password==='1234'){
+    localStorage.setItem('playerLogged', 'Admin');
+    localStorage.setItem('adminLogged','true');
+    window.location.href='homepage.html';
+  } else { alert('Invalid admin credentials'); }
+}
+</script>
+</body>
+</html>

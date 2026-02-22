@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LNNCHS Game Ranker</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png" type="image/png">
+<meta name="theme-color" content="#000000">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+/* Your CSS (from your script) */
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#000;font-family:'Press Start 2P',cursive;color:#ffea00;overflow:hidden;font-size:11px;}
+h1,h3,h4,button,input::placeholder{text-shadow:0 0 2px #ffea00,0 0 4px #ff00de;}
+p,span,td,th{text-shadow:0 0 2px #00ffff,0 0 4px #00ffff;}
+/* Slides */
+.slide{position:absolute;inset:0;padding:18px;overflow-y:auto;opacity:0;transform:translateX(30px);transition:opacity .4s ease, transform .4s ease;pointer-events:none;}
+.slide.active{opacity:1;transform:translateX(0);pointer-events:auto;}
+/* UI Boxes */
+.box{border:2px solid #ffea00;padding:12px;margin-top:10px;background:rgba(0,0,0,.6);border-radius:6px;}
+button{background:#ffea00;color:#000;border:none;padding:8px;margin-top:6px;font-size:.55em;border-radius:6px;cursor:pointer;}
+button:hover{background:#ffff66;}
+input,select{width:100%;padding:6px;margin-top:6px;background:#000;border:2px solid #ffea00;color:#ffea00;font-size:.55em;border-radius:4px;}
+.nav{display:flex;gap:6px;margin-top:10px;}
+.nav button{flex:1;}
+#profile{position:fixed;top:6px;right:6px;display:flex;align-items:center;gap:4px;z-index:10;}
+#profile img{width:26px;height:26px;border-radius:50%;border:1px solid #ffea00;}
+table{width:100%;border-collapse:collapse;font-size:.45em;}
+th,td{border-bottom:1px solid #ffea00;padding:4px;}
+td img{width:26px;height:26px;object-fit:cover;}
+.chat-messages{height:220px;overflow-y:auto;margin-bottom:6px;font-size:.45em;}
+.event{display:flex;gap:6px;align-items:center;margin-top:6px;font-size:.5em;}
+.event img{width:40px;height:40px;object-fit:cover;border:1px solid #ffea00;}
+</style>
+</head>
+<body>
+
+<!-- PROFILE -->
+<div id="profile">
+  <img id="profilePfp">
+  <span id="profileUser"></span>
+  <span id="profileRank"></span>
+  <button onclick="logout()">LOGOUT</button>
+</div>
+
+<!-- SLIDES -->
+<section class="slide active">
+  <h1>WELCOME</h1>
+  <p>LNNCHS GAME RANKER</p>
+  <div class="nav">
+    <button onclick="nextSlide()">NEXT →</button>
+    <button onclick="openAuth()">LOGIN / CREATE</button>
+  </div>
+</section>
+
+<section class="slide">
+  <h3>LEADERBOARD</h3>
+  <div class="box">
+    <table>
+      <thead><tr><th>POS</th><th>NAME</th><th>STAT</th><th>RANK</th></tr></thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+  </div>
+  <div class="nav">
+    <button onclick="prevSlide()">← BACK</button>
+    <button onclick="nextSlide()">NEXT →</button>
+  </div>
+</section>
+
+<section class="slide">
+  <h3>GLOBAL CHAT</h3>
+  <div class="box">
+    <div class="chat-messages" id="chatMessages"></div>
+    <input id="chatInput" placeholder="Type message">
+    <button onclick="sendMessage()">SEND</button>
+  </div>
+  <div class="nav">
+    <button onclick="prevSlide()">← BACK</button>
+    <button onclick="nextSlide()">NEXT →</button>
+  </div>
+</section>
+
+<section class="slide">
+  <h3>1v1 BATTLE</h3>
+  <div class="box">
+    <select id="battleGame">
+      <option>CODM</option>
+      <option>ML</option>
+      <option>MC</option>
+      <option>Geometry Dash</option>
+      <option>Random</option>
+    </select>
+    <input placeholder="Opponent username">
+    <button>SEND CHALLENGE</button>
+  </div>
+  <div class="nav">
+    <button onclick="prevSlide()">← BACK</button>
+    <button onclick="nextSlide()">NEXT →</button>
+  </div>
+</section>
+
+<section class="slide">
+  <h3>EVENTS & TOURNAMENTS</h3>
+  <div class="box" id="eventsBox"></div>
+  <div class="nav">
+    <button onclick="prevSlide()">← BACK</button>
+    <button onclick="nextSlide()">NEXT →</button>
+  </div>
+</section>
+
+<section class="slide" id="adminSlide">
+  <h3>ADMIN CONTROLS</h3>
+  <div class="box">
+    <h4>Upload App Audio</h4>
+    <input type="file" id="appAudio" accept="audio/*">
+    <button onclick="uploadAudio()">UPLOAD</button>
+    <audio id="bgAudio" loop controls></audio>
+  </div>
+
+  <div class="box">
+    <h4>Manage Players</h4>
+    <input id="newUser" placeholder="Username">
+    <input id="newRank" placeholder="New Rank">
+    <input type="file" id="newImg" accept="image/*">
+    <button onclick="updatePlayer()">UPDATE PLAYER</button>
+  </div>
+
+  <div class="nav">
+    <button onclick="prevSlide()">← BACK</button>
+  </div>
+</section>
+
+<script>
+// JavaScript (from your script) including slides, leaderboard, chat, admin, events, audio
+// + Added player update function
+const slides=[...document.querySelectorAll('.slide')];
+let currentIndex=0;
+function showSlide(i){if(i<0||i>=slides.length)return;slides.forEach(s=>s.classList.remove('active'));slides[i].classList.add('active');currentIndex=i;}
+function nextSlide(){showSlide(currentIndex+1)}
+function prevSlide(){showSlide(currentIndex-1)}
+function openAuth(){location.href="auth.html"}
+function logout(){localStorage.removeItem('playerLogged');location.reload()}
+
+/* PROFILE */
+function updateProfile(){const u=localStorage.getItem('playerLogged');const players=JSON.parse(localStorage.players||"[]");const p=players.find(x=>x.user===u);if(!p)return;profileUser.textContent=p.user;profileRank.textContent=`(${p.rank})`;profilePfp.src=p.img||""}
+
+/* LEADERBOARD */
+function loadLeaderboard(){const body=leaderboardBody;body.innerHTML="";const players=JSON.parse(localStorage.players||"[]").filter(p=>!['F','F-'].includes(p.rank));players.forEach((p,i)=>{body.innerHTML+=`<tr><td>${i+1}</td><td>${p.user}</td><td>${p.img?`<img src="${p.img}">`:""}</td><td>${p.rank}</td></tr>`})}
+
+/* CHAT */
+let lastChat=0;
+function sendMessage(){const msg=chatInput.value.trim();if(!msg)return;if(Date.now()-lastChat<5000)return alert("Cooldown 5s");const user=localStorage.playerLogged;if(!user)return alert("Login first");const players=JSON.parse(localStorage.players||"[]");const p=players.find(x=>x.user===user);if(['F','F-'].includes(p.rank))return alert("Rank too low");const chat=JSON.parse(localStorage.chat||"[]");chat.push({u:user,r:p.rank,m:msg});localStorage.chat=JSON.stringify(chat);chatInput.value="";lastChat=Date.now();loadChat()}
+function loadChat(){chatMessages.innerHTML="";(JSON.parse(localStorage.chat||"[]")).forEach(c=>{chatMessages.innerHTML+=`<div>${c.u}[${c.r}] - ${c.m}</div>`})}
+
+/* EVENTS */
+function addEvent(){const t=eventTitle.value;const type=eventType.value;const f=eventImg.files[0];if(!t||!f)return;const r=new FileReader();r.onload=e=>{const ev=JSON.parse(localStorage.events||"[]");ev.push({t,type,img:e.target.result});localStorage.events=JSON.stringify(ev);loadEvents()};r.readAsDataURL(f)}
+function loadEvents(){eventsBox.innerHTML="";(JSON.parse(localStorage.events||"[]")).forEach(e=>{eventsBox.innerHTML+=`<div class="event"><img src="${e.img}"><span>${e.t} (${e.type})</span></div>`})}
+
+/* AUDIO */
+function uploadAudio(){const f=appAudio.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{localStorage.audio=e.target.result;bgAudio.src=e.target.result;bgAudio.play()};r.readAsDataURL(f)}
+
+/* ADMIN PLAYER UPDATE */
+function updatePlayer(){const u=newUser.value.trim();const r=newRank.value.trim();const f=newImg.files[0];if(!u||!r)return;const players=JSON.parse(localStorage.players||"[]");const p=players.find(x=>x.user===u);if(!p)return alert("Player not found");if(f){const fr=new FileReader();fr.onload=e=>{p.img=e.target.result;p.rank=r;localStorage.players=JSON.stringify(players);updateProfile();loadLeaderboard();alert("Player updated!")};fr.readAsDataURL(f)}else{p.rank=r;localStorage.players=JSON.stringify(players);updateProfile();loadLeaderboard();alert("Player updated!")}}
+
+if(localStorage.audio){bgAudio.src=localStorage.audio}
+if(localStorage.adminLogged==="true"){adminSlide.style.display="block"}else{adminSlide.style.display="none"}
+
+updateProfile();loadLeaderboard();loadChat();loadEvents();
+
+/* SERVICE WORKER */
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(reg=>console.log('SW registered',reg)).catch(err=>console.error('SW failed',err))}
+</script>
+</body>
+</html>
